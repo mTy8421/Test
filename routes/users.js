@@ -1,13 +1,19 @@
 var express = require('express');
 var router = express.Router();
 
+var { table } = require('./db');
+
 /* GET users listing. */
 router.get('/', function (req, res) {
-  const data = [
-    { hello: 'hello', test: 'test' },
-    { hello: 'hello2', test: 'test2' },
-  ];
-  res.json(data);
+  res.json(table);
 });
+
+router.post('/', (req, res) => {
+  if (req.json) {
+    table.push(req.json)
+    console.table(table)
+  }
+  res.json(table);
+})
 
 module.exports = router;
