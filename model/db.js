@@ -1,6 +1,6 @@
 var db = [
-  { id: 1, name: 'test', password: '1234' },
-  { id: 2, name: 'test2', password: 'test2' },
+  { id: 1, name: 'test', password: '1234', role: 'member' },
+  { id: 2, name: 'test2', password: '1234', role: 'admin' },
 ]
 
 var table = [

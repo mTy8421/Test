@@ -3,17 +3,19 @@ var router = express.Router();
 var passport = require('passport');
 var LocalStrategy = require('passport-local');
 
-var { db } = require('./db');
+var { db } = require('../model/db');
 
 passport.use(
   new LocalStrategy(async (username, passowrd, done) => {
     try {
       const user = db.find((user) => user.name === username && user.password === passowrd)
+
       if (user) {
         done(null, user)
       } else {
         done(null, false)
       }
+
     } catch (err) {
       done(err)
     }
@@ -54,13 +56,14 @@ router.get('/logout', (req, res) => {
 
 /* GET home page. */
 router.get('/', function (req, res) {
-  // res.render('index', { title: 'Express' });
+
   if (req.session.passport) {
     console.table(req.session.passport);
     res.json({ user: req.session.passport.user });
   } else {
     res.json({ msg: 'not login' });
   }
+
 });
 
 module.exports = router;

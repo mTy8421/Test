@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-var { table } = require('./db');
+var { table } = require('../model/db');
 
 /* GET users listing. */
 router.get('/', function (req, res) {
@@ -9,8 +9,8 @@ router.get('/', function (req, res) {
 });
 
 router.post('/', (req, res) => {
-  if (req.json) {
-    table.push(req.json)
+  if (req.body) {
+    table.push(req.body)
     console.table(table)
   }
   res.json(table);
