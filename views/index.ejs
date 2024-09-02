@@ -1,66 +1,101 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="stylesheets/style.css">
-    <title><%=title%></title>
+    <title>เข้าสู่ระบบ / ลงทะเบียน</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        form {
+            display: none;
+        }
+        form.active {
+            display: block;
+        }
+        input {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .tab {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab button {
+            flex: 1;
+            background-color: #f1f1f1;
+            color: black;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+        .tab button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
 </head>
-
 <body>
-
-    <div class="container" id="container">
-        <div class="form-container sign-up">
-            <form>
-                <h1>Create Account</h1>
-                <div class="social-icons">
-                    <a href="#" class="icon"><i class="fa-brands fa-google-plus-g"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-github"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-linkedin-in"></i></a>
-                </div>
-                <span>or use your email for registeration</span>
-                <input type="text" placeholder="Name">
-                <input type="email" placeholder="Email">
-                <input type="password" placeholder="Password">
-                <button>Sign Up</button>
-            </form>
+        
+    <div class="container">
+        <div class="tab">
+            <button onclick="showForm('login')">เข้าสู่ระบบ</button>
+            <button onclick="showForm('register')">ลงทะเบียน</button>
         </div>
-        <div class="form-container sign-in">
-            <form method="post">
-                <h1>Sign In</h1>
-                <div class="social-icons">
-                    <a href="#" class="icon"><i class="fa-brands fa-google-plus-g"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-github"></i></a>
-                    <a href="#" class="icon"><i class="fa-brands fa-linkedin-in"></i></a>
-                </div>
-                <span>or use your email password</span>
-                <input type="email" placeholder="Email">
-                <input type="password" placeholder="Password">
-                <a href="#">Forget Your Password?</a>
-                <button>Sign In</button>
-            </form>
-        </div>
-        <div class="toggle-container">
-            <div class="toggle">
-                <div class="toggle-panel toggle-left">
-                    <h1>Welcome Back!</h1>
-                    <p>Enter your personal details to use all of site features</p>
-                    <button class="hidden" id="login">Sign In</button>
-                </div>
-                <div class="toggle-panel toggle-right">
-                    <h1>Hello, Friend!</h1>
-                    <p>Register with your personal details to use all of site features</p>
-                    <button class="hidden" id="register">Sign Up</button>
-                </div>
-            </div>
-        </div>
+        <form id="login-form" class="active">
+            <h2>เข้าสู่ระบบ</h2>
+            <input type="text" placeholder="ชื่อผู้ใช้" required>
+            <input type="password" placeholder="รหัสผ่าน" required>
+            <button type="submit">เข้าสู่ระบบ</button>
+        </form>
+        <form id="register-form">
+            <h2>ลงทะเบียน</h2>
+            <input type="text" placeholder="ชื่อผู้ใช้" required>
+            <input type="email" placeholder="อีเมล" required>
+            <input type="password" placeholder="รหัสผ่าน" required>
+            <input type="password" placeholder="ยืนยันรหัสผ่าน" required>
+            <button type="submit">ลงทะเบียน</button>
+        </form>
     </div>
 
-    <script src="javascripts/script.js"></script>
+    <script>
+        function showForm(formId) {
+            document.getElementById('login-form').classList.remove('active');
+            document.getElementById('register-form').classList.remove('active');
+            document.getElementById(formId + '-form').classList.add('active');
+            
+            const buttons = document.querySelectorAll('.tab button');
+            buttons.forEach(button => button.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+    </script>
+        
 </body>
-
 </html>

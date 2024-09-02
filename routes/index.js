@@ -32,9 +32,11 @@ passport.use(
           }
         }
       );
+
       if (!user) {
         done(null, false);
       }
+
     } catch (err) {
       done(err);
     }
