@@ -15,12 +15,10 @@ passport.use(
         `SELECT * FROM auth WHERE user_email = ?`,
         [username],
         (err, result) => {
-          if (result) {
-            console.log(`passowrdInput : ${passowrd}`);
-            const check = bycrypt.compareSync(
-              passowrd,
-              result[0].user_password
-            );
+          console.log(`passowrdInput : ${result}`);
+          console.log(`passowrdInput : ${passowrd}`);
+          if (result[0]) {
+            const check = bycrypt.compareSync(passowrd, result[0].user_password);
             if (check) {
               done(null, result);
             } else {
@@ -102,7 +100,13 @@ router.get("/createTable", (req, res) => {
   var pass = "1234";
   var hash = bycrypt.hashSync(pass, 10);
   conn.query(
-    `INSERT INTO auth (user_name, user_password, user_role) VALUES ('test', '${hash}', 'admin')`,
+    `INSERT INTO auth (user_email, user_name, user_password, user_role) VALUES ('test@testgmail.com', 'test', '${hash}', 'admin')`,
+    (err) => {
+      if (err) throw err;
+    }
+  );
+  conn.query(
+    `INSERT INTO auth (user_email, user_name, user_password, user_role) VALUES ('test2@test2gmail.com', 'test2', '${hash}', 'member')`,
     (err) => {
       if (err) throw err;
     }

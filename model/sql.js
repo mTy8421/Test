@@ -32,7 +32,7 @@ const createTable = () => {
         user_id INT NOT NULL,
         mission_title VARCHAR(255) NOT NULL,
         mission_description TEXT NOT NULL,
-        mission_image TEXT NOT NULL
+        mission_image TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES auth(user_id)
     )`,
     (err) => {

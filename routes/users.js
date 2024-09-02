@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 
-var { table } = require("../model/db");
+var { table } = require("../model/db").default;
 
 /* GET users listing. */
 router.get("/", function (req, res) {
