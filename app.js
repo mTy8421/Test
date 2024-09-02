@@ -29,7 +29,9 @@ app.use(session(
     cookie: { maxAge: 10000 * 60 * 60 * 24 }
   }
 ));
-app.use(passport.authorize('session'));
+// app.use(passport.authorize('session'));
+app.use(passport.session());
+app.use(passport.initialize());
 
 app.use('/api', indexRouter);
 app.use('/api/users', usersRouter);

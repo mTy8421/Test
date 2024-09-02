@@ -11,8 +11,8 @@ var { createTable, conn } = require("../model/sql");
 passport.use(
   new LocalStrategy(async (username, passowrd, done) => {
     try {
-      conn.query(
-        `SELECT * FROM auth WHERE user_name = ?`,
+      const user = conn.query(
+        `SELECT * FROM auth WHERE user_email = ?`,
         [username],
         (err, result) => {
           if (result) {
@@ -32,6 +32,9 @@ passport.use(
           }
         }
       );
+      if (!user) {
+        done(null, false);
+      }
     } catch (err) {
       done(err);
     }
