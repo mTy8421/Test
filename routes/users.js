@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 
-var { table } = require("../model/db").default;
+var { table } = require("../model/db");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
