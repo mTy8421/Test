@@ -1,19 +1,44 @@
-var express = require('express');
-var router = express.Router();
+const express = require("express");
+const router = express.Router();
+const multer = require("multer");
 
-var { table } = require('../model/db');
+var { table } = require("../model/db");
 
-/* GET users listing. */
-router.get('/', function (req, res) {
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./api/images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage });
+
+/* GET users Data */
+router.get("/", function (req, res) {
   res.json(table);
 });
 
-router.post('/', (req, res) => {
-  if (req.body) {
-    table.push(req.body)
-    console.table(table)
+// POST user insert into data
+router.post("/", upload.single("image"), (req, res) => {
+  if (req.file) {
+    res.json({ message: "Uploaded" });
+  } else {
+    res.json({ message: "Error uploading" });
   }
-  res.json(table);
-})
+});
+
+// POST user insert into data
+router.post("/insert", (req, res) => {
+  if (req.body) {
+    req.body.forEach((element) => {
+      table.push(element);
+    });
+    res.json({ message: "Inserted" });
+  } else {
+    res.json({ message: "Error inserting" });
+  }
+});
 
 module.exports = router;
