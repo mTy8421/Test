@@ -1,24 +1,58 @@
-var express = require('express')
-var router = express.Router()
+const express = require("express");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
-var passport = require('passport')
-var GoogleStrategy = require('passport-google-oauth20')
+const app = express();
 
-var users = []
+// Set up Passport.js
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: "YOUR_CLIENT_ID",
+      clientSecret: "YOUR_CLIENT_SECRET",
+      callbackURL: "/auth/google/callback",
+    },
+    (accessToken, refreshToken, profile, cb) => {
+      // You can store the user in your database here
+      // For now, just return the profile
 
-passport.use(new GoogleStrategy({
-  clientID: '',
-  clientSecret: '',
-  callbackURL: '/api/google',
-}, (accessToken, refreshToken, profile, done) => {
-}))
+      console.log(profile);
 
-passport.serializeUser()
+      return cb(null, profile);
+    }
+  )
+);
 
-passport.deserializeUser()
+// Route for Google login
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
 
-router.get('/', (req, res) => {
-  res.render('index')
-})
+// Route for Google callback
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/login",
+  }),
+  (req, res) => {
+    // Successful login, redirect to protected route
+    res.redirect("/protected");
+  }
+);
 
-module.exports = router
+// Protected route
+app.get("/protected", (req, res) => {
+  if (req.user) {
+    res.send(`Hello, ${req.user.displayName}!`);
+  } else {
+    res.send("You are not logged in");
+  }
+});
+
+// Login route
+app.get("/login", (req, res) => {
+  res.send('Login with Google: <a href="/auth/google">Click here</a>');
+});
