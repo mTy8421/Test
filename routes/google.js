@@ -8,9 +8,9 @@ const app = express();
 passport.use(
   new GoogleStrategy(
     {
-      clientID: "YOUR_CLIENT_ID",
-      clientSecret: "YOUR_CLIENT_SECRET",
-      callbackURL: "/auth/google/callback",
+      clientID: "",
+      clientSecret: "",
+      callbackURL: "",
     },
     (accessToken, refreshToken, profile, cb) => {
       // You can store the user in your database here
