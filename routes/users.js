@@ -6,7 +6,7 @@ var { table } = require("../model/db");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./api/images");
+    cb(null, "public/api/images");
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);
