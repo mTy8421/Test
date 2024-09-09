@@ -43,7 +43,17 @@ router.get("/", function (req, res) {
 
 // For TitleWork
 router.post("/addHeadTitle", (req, res) => {
-  if (req.body.topic != "" && req.body.performance != "") {
+  if (req.body.topic != "" && req.body.date != "" && req.body.detail != "") {
+    TitleWork.push({ id: TitleWork.length + 1, ...req.body });
+    console.table(TitleWork);
+    res.json({ message: "success" });
+  } else {
+    res.json({ message: "error" });
+  }
+});
+
+router.put("/addHeadTitle", (req, res) => {
+  if (req.body.topic != "" && req.body.date != "" && req.body.detail != "") {
     TitleWork.push({ id: TitleWork.length + 1, ...req.body });
     console.table(TitleWork);
     res.json({ message: "success" });
@@ -63,6 +73,7 @@ router.post("/addHeadWork", (req, res) => {
     console.table(tableAddWork);
     res.json({ message: "success" });
   } else {
+    console.table(req.body);
     res.json({ message: "error" });
   }
 });
@@ -85,7 +96,6 @@ const storageNew = multer.diskStorage({
 const uploadNew = multer({ storage: storageNew });
 
 router.post("/addWork", uploadNew.single("image"), (req, res) => {
-
   if (
     req.body.timeWork != "" &&
     req.body.timeUser != "" &&
@@ -106,7 +116,6 @@ router.post("/addWork", uploadNew.single("image"), (req, res) => {
 });
 
 router.get("/addWork", (req, res) => {
-  // console.table(tableWork)
   res.json(tableWork);
 });
 
