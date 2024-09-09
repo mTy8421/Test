@@ -17,10 +17,11 @@ html{
 }
 body{
   min-height: 100vh;
-  background-image: url(background.jpg);
+  background-image: url(../images/systme/background.jpg);
   background-size: cover;
   background-position: right;
   overflow: hidden;
+  backdrop-filter: blur(0.3rem);
 }
 .wrapper{
   box-sizing: border-box;
