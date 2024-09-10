@@ -23,6 +23,7 @@ var TitleWork = [
     topic: "hello",
     date: "2024-09-09",
     detail: "hello World",
+    type: "money",
   },
 ];
 
@@ -31,13 +32,8 @@ var tableAddWork = [{ id: 1, topic: "hello", name: "Update Name", time: "20" }];
 var tableWork = [
   {
     id: 1,
-    type: "Work 1",
-    topic: "Update",
-    name: "Test",
-    time: "90",
-    timeWork: "90",
-    timeUse: "20",
-    values: "test",
+    time: "1234",
+    valueTest: "valueTest",
     imgae: "test.jpg",
   },
 ];

@@ -4,6 +4,16 @@ const multer = require("multer");
 
 var { table, TitleWork, tableAddWork, tableWork } = require("../model/db");
 
+const { createConnection } = require("../model/sql"); // Correct the import path
+
+let conn;
+
+createConnection()
+  .then((connection) => {
+    conn = connection;
+  })
+  .catch((err) => console.error(`connection error: ${err}`));
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "public/api/images");
@@ -42,11 +52,32 @@ router.get("/", function (req, res) {
 });
 
 // For TitleWork
-router.post("/addHeadTitle", (req, res) => {
+router.post("/addHeadTitle", async (req, res) => {
   if (req.body.topic != "" && req.body.date != "" && req.body.detail != "") {
-    TitleWork.push({ id: TitleWork.length + 1, ...req.body });
-    console.table(TitleWork);
-    res.json({ message: "success" });
+    try {
+      await conn.query(
+        `
+        INSERT INTO titleWork(
+        user_id,
+        title_topic,
+        title_detail,
+        title_type,
+        title_date,
+        title_status
+        )VALUES(?, ?, ?, ?, ?, 0)
+        `,
+        [
+          req.session.passport.user.user_id,
+          req.body.topic,
+          req.body.detail,
+          req.body.type,
+          req.body.date,
+        ]
+      );
+      res.json({ message: "success" });
+    } catch (error) {
+      console.log(error);
+    }
   } else {
     res.json({ message: "error" });
   }
@@ -62,27 +93,110 @@ router.put("/addHeadTitle", (req, res) => {
   }
 });
 
-router.get("/addHeadTitle", (req, res) => {
-  res.json(TitleWork);
+router.get("/addHeadTitle", async (req, res) => {
+  try {
+    const id = req.session.passport.user.user_id;
+    const [data] = await conn.query(
+      `SELECT * FROM titleWork WHERE user_id = ?`,
+      [id]
+    );
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 // For tableAddWork
-router.post("/addHeadWork", (req, res) => {
-  if (req.body.topic != "" && req.body.name != "" && req.body.time != "") {
-    tableAddWork.push({ id: tableAddWork.length + 1, ...req.body });
-    console.table(tableAddWork);
-    res.json({ message: "success" });
+router.post("/addHeadWork", async (req, res) => {
+  if (req.body.id != "" && req.body.name != "" && req.body.time != "") {
+    try {
+      await conn.query(
+        `
+        INSERT INTO detailWork(
+        title_id,
+        detail_name,
+        detail_time
+        )VALUES(?, ?, ?)
+        `,
+        [req.body.id, req.body.name, req.body.time]
+      );
+      res.json({ message: "success" });
+    } catch (error) {
+      console.log(error);
+    }
   } else {
-    console.table(req.body);
     res.json({ message: "error" });
   }
 });
 
-router.get("/addHeadWork", (req, res) => {
-  res.json(tableAddWork);
+router.get("/addHeadWork", async (req, res) => {
+  try {
+    const id = req.session.passport.user.user_id;
+    const [data] = await conn.query(
+      `SELECT * FROM titleWork INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id WHERE titleWork.user_id = ?`,
+      [id]
+    );
+    res.json(data);
+    console.table(data);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
-// For tableWork
+// For Approve
+
+router.get("/approve", async (req, res) => {
+  try {
+    const [data] = await conn.query(`
+      SELECT * FROM titleWork INNER JOIN auth ON titleWork.user_id = auth.user_id WHERE titleWork.title_status = 0
+      `);
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.put("/approve", async (req, res) => {
+  try {
+    console.log(req.body.status);
+    if (req.body.status) {
+      const [data] = await conn.query(
+        `
+        UPDATE titleWork
+        SET title_status = 1
+        WHERE title_id = ?
+        `,
+        [req.body.title_id]
+      );
+      res.json(data);
+    } else {
+      const [data] = await conn.query(
+        `
+        UPDATE titleWork
+        SET title_status = 2
+        WHERE title_id = ?
+        `,
+        [req.body.title_id]
+      );
+      res.json(data);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.get("/approveDetail", async (req, res) => {
+  try {
+    const [data] = await conn.query(`
+      SELECT * FROM titleWork INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id WHERE titleWork.title_id
+      `);
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// For tableWork have upload file
 
 const storageNew = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -95,28 +209,76 @@ const storageNew = multer.diskStorage({
 
 const uploadNew = multer({ storage: storageNew });
 
-router.post("/addWork", uploadNew.single("image"), (req, res) => {
-  if (
-    req.body.timeWork != "" &&
-    req.body.timeUser != "" &&
-    req.body.values != "" &&
-    req.file != ""
-  ) {
-    tableWork.push({
-      id: tableWork.length + 1,
-      ...req.body,
-      imgae: req.file.filename,
-    });
-    console.table(tableWork);
-    console.log(req.file);
-    res.json({ message: "success" });
+router.post("/addWork", uploadNew.single("image"), async (req, res) => {
+  if (req.body.time != "" && req.body.valueTest != "" && req.file != "") {
+    try {
+      const id = req.body.detail_id;
+      const idUser = req.session.passport.user.user_id;
+      const [data] = await conn.query(
+        `
+        INSERT INTO sendWork(
+        detail_id,
+        user_id,
+        send_detail,
+        send_time,
+        send_image
+        )VALUES(?, ?, ?, ?, ?)
+        `,
+        [id, idUser, req.body.valueTest, req.body.time, req.file.filename]
+      );
+      console.log(data);
+      res.json({ message: "success" });
+    } catch (error) {
+      console.log(error);
+    }
   } else {
     res.json({ message: "error" });
   }
 });
 
-router.get("/addWork", (req, res) => {
-  res.json(tableWork);
+router.get("/addWork", async (req, res) => {
+  try {
+    const id = req.session.passport.user.user_id;
+    const [data] = await conn.query(
+      `
+      SELECT * FROM titleWork INNER JOIN auth ON titleWork.user_id = auth.user_id INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id WHERE titleWork.title_status = 1 AND auth.user_id = ?
+      `,
+      [id]
+    );
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// for Get History
+router.get("/historyWork", async (req, res) => {
+  try {
+    const id = req.session.passport.user.user_id;
+    const [data] = await conn.query(
+      `
+      SELECT * FROM sendWork INNER JOIN auth ON sendWork.user_id = auth.user_id INNER JOIN detailWork ON sendWork.detail_id = detailWork.detail_id WHERE sendWork.user_id = ?
+      `,
+      [id]
+    );
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// for Edit User
+router.get("/userEdit", async (req, res) => {
+  try {
+    const [data] = await conn.query(
+      `
+      SELECT * FROM auth;
+      `
+    );
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 module.exports = router;

@@ -139,14 +139,35 @@ router.get("/createTable", async (req, res) => {
       )`);
 
     await conn.execute(`
-      CREATE TABLE mission (
-        mission_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      CREATE TABLE titleWork (
+        title_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
-        mission_title VARCHAR(255) NOT NULL,
-        mission_description TEXT NOT NULL,
-        mission_image TEXT NOT NULL,
+        title_topic VARCHAR(255) NOT NULL UNIQUE,
+        title_detail TEXT NOT NULL,
+        title_type VARCHAR(255) NOT NULL,
+        title_date VARCHAR(255) NOT NULL,
+        title_status INT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES auth(user_id)
       )`);
+    await conn.execute(`
+      CREATE TABLE detailWork(
+        detail_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        title_id INT NOT NULL,
+        detail_name TEXT NOT NULL,
+        detail_time INT NOT NULL,
+        FOREIGN KEY (title_id) REFERENCES titleWork(title_id)
+      )`);
+    await conn.execute(`
+        CREATE TABLE sendWork(
+          send_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+          detail_id INT NOT NULL,
+          user_id INT NOT NULL,
+          send_detail TEXT NOT NULL,
+          send_time INT NOT NULL,
+          send_image TEXT NOT NULL,
+          FOREIGN KEY (detail_id) REFERENCES detailWork(detail_id),
+          FOREIGN KEY (user_id) REFERENCES auth(user_id)
+        )`);
 
     await conn.execute(`
         INSERT INTO auth(
@@ -170,7 +191,17 @@ router.get("/createTable", async (req, res) => {
           '${hash}', 
           'member'
           )`);
-
+    await conn.execute(`
+            INSERT INTO auth(
+            user_email,
+            user_name,
+            user_password,
+            user_role
+            )VALUES('test3@testgmail.com', 
+            'test', 
+            '${hash}', 
+            'head'
+            )`);
     console.log("Tables created successfully");
   } catch (err) {
     console.log(err);
