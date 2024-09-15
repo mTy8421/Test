@@ -135,7 +135,7 @@ router.get("/createTable", async (req, res) => {
         user_email VARCHAR(255) NOT NULL UNIQUE,
         user_name VARCHAR(255) NOT NULL,
         user_password VARCHAR(255) NOT NULL,
-        user_role VARCHAR(255) NOT NULL
+        user_role ENUM('admin', 'หัวหน้าสำนักงาน', 'พนักงาน')
       )`);
 
     await conn.execute(`
@@ -155,6 +155,7 @@ router.get("/createTable", async (req, res) => {
         title_id INT NOT NULL,
         detail_name TEXT NOT NULL,
         detail_time INT NOT NULL,
+        detail_status INT NOT NULL,
         FOREIGN KEY (title_id) REFERENCES titleWork(title_id)
       )`);
     await conn.execute(`
@@ -189,7 +190,7 @@ router.get("/createTable", async (req, res) => {
           )VALUES('test2@testgmail.com', 
           'test', 
           '${hash}', 
-          'member'
+          'พนักงาน'
           )`);
     await conn.execute(`
             INSERT INTO auth(
@@ -200,7 +201,7 @@ router.get("/createTable", async (req, res) => {
             )VALUES('test3@testgmail.com', 
             'test', 
             '${hash}', 
-            'head'
+            'หัวหน้าสำนักงาน'
             )`);
     console.log("Tables created successfully");
   } catch (err) {

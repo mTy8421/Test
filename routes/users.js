@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const bcrypt = require("bcrypt");
 
 var { table, TitleWork, tableAddWork, tableWork } = require("../model/db");
 
@@ -115,8 +116,9 @@ router.post("/addHeadWork", async (req, res) => {
         INSERT INTO detailWork(
         title_id,
         detail_name,
-        detail_time
-        )VALUES(?, ?, ?)
+        detail_time,
+        detail_status
+        )VALUES(?, ?, ?, 0)
         `,
         [req.body.id, req.body.name, req.body.time]
       );
@@ -140,6 +142,31 @@ router.get("/addHeadWork", async (req, res) => {
     console.table(data);
   } catch (error) {
     console.log(error);
+  }
+});
+
+router.put("/addHeadWork", async (req, res) => {
+  if (req.body.id != "" && req.body.name != "" && req.body.time != "") {
+    try {
+      const [data] = await conn.query(
+        `
+        UPDATE detailWork
+        SET detail_name = ?, detail_time = ?
+        WHERE detail_id = ?
+        `,
+        [req.body.name, req.body.time, req.body.id]
+      );
+      console.log(`req.body.id ${req.body.id}`);
+      console.log(`req.body.name ${req.body.name}`);
+      console.log(`req.body.time ${req.body.time}`);
+      if (data) {
+        res.json({ message: "success" });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  } else {
+    res.json({ message: "error" });
   }
 });
 
@@ -188,7 +215,7 @@ router.put("/approve", async (req, res) => {
 router.get("/approveDetail", async (req, res) => {
   try {
     const [data] = await conn.query(`
-      SELECT * FROM titleWork INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id WHERE titleWork.title_id
+      SELECT * FROM titleWork INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id
       `);
     res.json(data);
   } catch (error) {
@@ -226,6 +253,14 @@ router.post("/addWork", uploadNew.single("image"), async (req, res) => {
         `,
         [id, idUser, req.body.valueTest, req.body.time, req.file.filename]
       );
+      await conn.query(
+        `
+        UPDATE detailWork
+        SET detail_status = 1
+        WHERE detail_id = ?
+        `,
+        [id]
+      );
       console.log(data);
       res.json({ message: "success" });
     } catch (error) {
@@ -241,7 +276,7 @@ router.get("/addWork", async (req, res) => {
     const id = req.session.passport.user.user_id;
     const [data] = await conn.query(
       `
-      SELECT * FROM titleWork INNER JOIN auth ON titleWork.user_id = auth.user_id INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id WHERE titleWork.title_status = 1 AND auth.user_id = ?
+      SELECT * FROM titleWork INNER JOIN auth ON titleWork.user_id = auth.user_id INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id WHERE titleWork.title_status = 1 AND auth.user_id = ? AND detailWork.detail_status = 0
       `,
       [id]
     );
@@ -274,6 +309,52 @@ router.get("/userEdit", async (req, res) => {
       `
       SELECT * FROM auth;
       `
+    );
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.post("/userEdit/", async (req, res) => {
+  if (
+    req.body.username != "" &&
+    req.body.email != "" &&
+    req.body.password != ""
+  ) {
+    try {
+      const passInclude = req.body.password;
+      const hash = bcrypt.hashSync(passInclude, 10);
+      await conn.query(
+        `
+        INSERT INTO auth(
+        user_name,
+        user_email,
+        user_password,
+        user_role
+        )VALUES(?, ?, ?, ?)
+        `,
+        [req.body.username, req.body.email, passInclude, req.body.role]
+      );
+      res.json({ message: "success" });
+    } catch (error) {
+      console.log(error);
+    }
+  } else {
+    res.json({ message: "error" });
+  }
+});
+
+// for chart
+
+router.get("/chartUser", async (req, res) => {
+  try {
+    const id = req.session.passport.user.user_id;
+    const [data] = await conn.query(
+      `
+      SELECT COUNT(titleWork.title_type) AS total, titleWork.title_type FROM sendWork INNER JOIN auth ON sendWork.user_id = auth.user_id INNER JOIN detailWork ON sendWork.detail_id = detailWork.detail_id INNER JOIN titleWork ON detailWork.title_id = titleWork.title_id WHERE sendWork.user_id = ? AND detailWork.detail_status = 1 GROUP BY titleWork.title_type;
+      `,
+      [id]
     );
     res.json(data);
   } catch (error) {
