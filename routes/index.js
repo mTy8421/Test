@@ -135,28 +135,30 @@ router.get("/createTable", async (req, res) => {
         user_email VARCHAR(255) NOT NULL UNIQUE,
         user_name VARCHAR(255) NOT NULL,
         user_password VARCHAR(255) NOT NULL,
-        user_role ENUM('admin', 'หัวหน้าสำนักงาน', 'พนักงาน')
+        user_role ENUM('admin', 'หัวหน้าสำนักงาน', 'พนักงาน', 'คณบดี', 'คณบดีฝ่ายยุทธศาสตร์และพัฒนาองค์กร', 'รองคณบดีฝ่ายวิชาการ', 'รองคณบดีฝ่ายวิจัยและนวัตถกรรม', 'รองคณบดีฝ่ายคุณภาพนิสิต')
       )`);
 
     await conn.execute(`
       CREATE TABLE titleWork (
         title_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
         title_topic VARCHAR(255) NOT NULL UNIQUE,
         title_detail TEXT NOT NULL,
         title_type VARCHAR(255) NOT NULL,
-        title_date VARCHAR(255) NOT NULL,
-        title_status INT NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES auth(user_id)
+        title_time TEXT NOT NULL,
+        title_date DATE NOT NULL,
+        title_status INT NOT NULL
       )`);
     await conn.execute(`
       CREATE TABLE detailWork(
         detail_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         title_id INT NOT NULL,
-        detail_name TEXT NOT NULL,
-        detail_time INT NOT NULL,
+        user_id INT NOT NULL,
+        detail_time TEXT NOT NULL,
+        detail_values TEXT NOT NULL,
+        detail_image TEXT NOT NULL,
         detail_status INT NOT NULL,
-        FOREIGN KEY (title_id) REFERENCES titleWork(title_id)
+        FOREIGN KEY (title_id) REFERENCES titleWork(title_id),
+        FOREIGN KEY (user_id) REFERENCES auth(user_id)
       )`);
     await conn.execute(`
         CREATE TABLE sendWork(

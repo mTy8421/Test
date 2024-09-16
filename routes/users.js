@@ -15,64 +15,32 @@ createConnection()
   })
   .catch((err) => console.error(`connection error: ${err}`));
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/api/images");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
-const upload = multer({ storage });
-
-// POST user insert into data
-router.post("/", upload.single("image"), (req, res) => {
-  if (req.file) {
-    res.json({ message: "Uploaded" });
-  } else {
-    res.json({ message: "Error uploading" });
-  }
-});
-
-// POST user insert into data
-router.post("/insert", (req, res) => {
-  if (req.body) {
-    req.body.forEach((element) => {
-      table.push(element);
-    });
-    res.json({ message: "Inserted" });
-  } else {
-    res.json({ message: "Error inserting" });
-  }
-});
-
-/* GET users Data */
-router.get("/", function (req, res) {
-  res.json(table);
-});
-
 // For TitleWork
 router.post("/addHeadTitle", async (req, res) => {
-  if (req.body.topic != "" && req.body.date != "" && req.body.detail != "") {
+  if (
+    req.body.topic != "" &&
+    req.body.date != "" &&
+    req.body.detail != "" &&
+    req.body.time != ""
+  ) {
     try {
       await conn.query(
         `
         INSERT INTO titleWork(
-        user_id,
         title_topic,
         title_detail,
         title_type,
         title_date,
+        title_time,
         title_status
         )VALUES(?, ?, ?, ?, ?, 0)
         `,
         [
-          req.session.passport.user.user_id,
           req.body.topic,
           req.body.detail,
           req.body.type,
           req.body.date,
+          req.body.time,
         ]
       );
       res.json({ message: "success" });
@@ -84,11 +52,37 @@ router.post("/addHeadTitle", async (req, res) => {
   }
 });
 
-router.put("/addHeadTitle", (req, res) => {
-  if (req.body.topic != "" && req.body.date != "" && req.body.detail != "") {
-    TitleWork.push({ id: TitleWork.length + 1, ...req.body });
-    console.table(TitleWork);
-    res.json({ message: "success" });
+router.put("/addHeadTitle", async (req, res) => {
+  if (
+    req.body.topic != "" &&
+    req.body.date != "" &&
+    req.body.detail != "" &&
+    req.body.time != ""
+  ) {
+    try {
+      await conn.query(
+        `
+        UPDATE titleWork SET
+        title_topic = ?,
+        title_detail = ?,
+        title_type = ?,
+        title_date = ?,
+        title_time = ?
+        WHERE title_id = ?
+        `,
+        [
+          req.body.topic,
+          req.body.detail,
+          req.body.type,
+          req.body.date,
+          req.body.time,
+          req.body.id,
+        ]
+      );
+      res.json({ message: "success" });
+    } catch (error) {
+      console.log(error);
+    }
   } else {
     res.json({ message: "error" });
   }
@@ -97,10 +91,7 @@ router.put("/addHeadTitle", (req, res) => {
 router.get("/addHeadTitle", async (req, res) => {
   try {
     const id = req.session.passport.user.user_id;
-    const [data] = await conn.query(
-      `SELECT * FROM titleWork WHERE user_id = ?`,
-      [id]
-    );
+    const [data] = await conn.query(`SELECT * FROM titleWork`);
     res.json(data);
   } catch (error) {
     console.log(error);
@@ -135,7 +126,7 @@ router.get("/addHeadWork", async (req, res) => {
   try {
     const id = req.session.passport.user.user_id;
     const [data] = await conn.query(
-      `SELECT * FROM titleWork INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id WHERE titleWork.user_id = ?`,
+      `SELECT * FROM titleWork INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id`,
       [id]
     );
     res.json(data);
@@ -175,7 +166,7 @@ router.put("/addHeadWork", async (req, res) => {
 router.get("/approve", async (req, res) => {
   try {
     const [data] = await conn.query(`
-      SELECT * FROM titleWork INNER JOIN auth ON titleWork.user_id = auth.user_id WHERE titleWork.title_status = 0
+      SELECT * FROM titleWork INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id INNER JOIN auth ON auth.user_id = detailWork.user_id WHERE titleWork.title_status = 1
       `);
     res.json(data);
   } catch (error) {
@@ -189,8 +180,16 @@ router.put("/approve", async (req, res) => {
     if (req.body.status) {
       const [data] = await conn.query(
         `
+        UPDATE detailWork
+        SET detail_status = 1
+        WHERE detail_id = ?
+        `,
+        [req.body.detail_id]
+      );
+      await conn.query(
+        `
         UPDATE titleWork
-        SET title_status = 1
+        SET title_status = 2
         WHERE title_id = ?
         `,
         [req.body.title_id]
@@ -198,6 +197,14 @@ router.put("/approve", async (req, res) => {
       res.json(data);
     } else {
       const [data] = await conn.query(
+        `
+        UPDATE detailWork
+        SET detail_status = 2
+        WHERE detail_id = ?
+        `,
+        [req.body.detail_id]
+      );
+      await conn.query(
         `
         UPDATE titleWork
         SET title_status = 2
@@ -215,7 +222,7 @@ router.put("/approve", async (req, res) => {
 router.get("/approveDetail", async (req, res) => {
   try {
     const [data] = await conn.query(`
-      SELECT * FROM titleWork INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id
+      SELECT * FROM titleWork INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id WHERE detailWork.detail_status = 0
       `);
     res.json(data);
   } catch (error) {
@@ -239,25 +246,26 @@ const uploadNew = multer({ storage: storageNew });
 router.post("/addWork", uploadNew.single("image"), async (req, res) => {
   if (req.body.time != "" && req.body.valueTest != "" && req.file != "") {
     try {
-      const id = req.body.detail_id;
+      const id = req.body.title_id;
       const idUser = req.session.passport.user.user_id;
       const [data] = await conn.query(
         `
-        INSERT INTO sendWork(
-        detail_id,
+        INSERT INTO detailWork(
+        title_id,
         user_id,
-        send_detail,
-        send_time,
-        send_image
-        )VALUES(?, ?, ?, ?, ?)
+        detail_time,
+        detail_values,
+        detail_image,
+        detail_status
+        )VALUES(?, ?, ?, ?, ?, 0)
         `,
-        [id, idUser, req.body.valueTest, req.body.time, req.file.filename]
+        [id, idUser, req.body.time, req.body.valueTest, req.file.filename]
       );
       await conn.query(
         `
-        UPDATE detailWork
-        SET detail_status = 1
-        WHERE detail_id = ?
+        UPDATE titleWork
+        SET title_status = 1
+        WHERE title_id = ?
         `,
         [id]
       );
@@ -276,7 +284,7 @@ router.get("/addWork", async (req, res) => {
     const id = req.session.passport.user.user_id;
     const [data] = await conn.query(
       `
-      SELECT * FROM titleWork INNER JOIN auth ON titleWork.user_id = auth.user_id INNER JOIN detailWork ON titleWork.title_id = detailWork.title_id WHERE titleWork.title_status = 1 AND auth.user_id = ? AND detailWork.detail_status = 0
+      SELECT * FROM titleWork WHERE title_status = 0;
       `,
       [id]
     );
@@ -292,9 +300,27 @@ router.get("/historyWork", async (req, res) => {
     const id = req.session.passport.user.user_id;
     const [data] = await conn.query(
       `
-      SELECT * FROM sendWork INNER JOIN auth ON sendWork.user_id = auth.user_id INNER JOIN detailWork ON sendWork.detail_id = detailWork.detail_id WHERE sendWork.user_id = ?
+      SELECT * FROM detailWork
+      INNER JOIN titleWork ON detailWork.title_id = titleWork.title_id
+      INNER JOIN auth ON detailWork.user_id = auth.user_id
+      WHERE detailWork.user_id = ?
       `,
       [id]
+    );
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.get("/historyWorkHead", async (req, res) => {
+  try {
+    const [data] = await conn.query(
+      `
+      SELECT * FROM detailWork
+      INNER JOIN titleWork ON detailWork.title_id = titleWork.title_id
+      INNER JOIN auth ON detailWork.user_id = auth.user_id
+      `
     );
     res.json(data);
   } catch (error) {
@@ -352,7 +378,68 @@ router.get("/chartUser", async (req, res) => {
     const id = req.session.passport.user.user_id;
     const [data] = await conn.query(
       `
-      SELECT COUNT(titleWork.title_type) AS total, titleWork.title_type FROM sendWork INNER JOIN auth ON sendWork.user_id = auth.user_id INNER JOIN detailWork ON sendWork.detail_id = detailWork.detail_id INNER JOIN titleWork ON detailWork.title_id = titleWork.title_id WHERE sendWork.user_id = ? AND detailWork.detail_status = 1 GROUP BY titleWork.title_type;
+      SELECT COUNT(titleWork.title_type) AS total, titleWork.title_type
+      FROM detailWork
+      INNER JOIN auth ON detailWork.user_id = auth.user_id
+      INNER JOIN titleWork ON detailWork.title_id = titleWork.title_id
+      WHERE detailWork.user_id = ? AND detailWork.detail_status = 1
+      GROUP BY titleWork.title_type;
+      `,
+      [id]
+    );
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.get("/chartHead", async (req, res) => {
+  try {
+    const [data] = await conn.query(
+      `
+      SELECT COUNT(auth.user_name) AS users, auth.user_name
+      FROM detailWork
+      INNER JOIN auth ON detailWork.user_id = auth.user_id
+      INNER JOIN titleWork ON detailWork.title_id = titleWork.title_id
+      WHERE detailWork.detail_status = 1
+      GROUP BY auth.user_name;
+      `
+    );
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.get("/chartBarHead", async (req, res) => {
+  try {
+    const [data] = await conn.query(
+      `
+      SELECT MONTH(titleWork.title_date) AS month, COUNT(titleWork.title_date) AS total
+      FROM detailWork
+      INNER JOIN auth ON detailWork.user_id = auth.user_id
+      INNER JOIN titleWork ON detailWork.title_id = titleWork.title_id
+      WHERE detailWork.detail_status = 1
+      GROUP BY MONTH(titleWork.title_date)
+      `
+    );
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.get("/chartBarUser", async (req, res) => {
+  try {
+    const id = req.session.passport.user.user_id;
+    const [data] = await conn.query(
+      `
+      SELECT MONTH(titleWork.title_date) AS month, COUNT(titleWork.title_date) AS total
+      FROM detailWork
+      INNER JOIN auth ON detailWork.user_id = auth.user_id
+      INNER JOIN titleWork ON detailWork.title_id = titleWork.title_id
+      WHERE detailWork.detail_status = 1 AND detailWork.user_id = ?
+      GROUP BY MONTH(titleWork.title_date)
       `,
       [id]
     );
